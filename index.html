@@ -2560,12 +2560,19 @@ document.querySelectorAll('.navBtn').forEach(btn=>{
 
 /* ===================== AUTH SUPABASE ===================== */
 async function initSupabaseUser(){
+  // Utiliser le client global initialisé au début du fichier
+  const client = window.supabaseClient;
 
-  const { data, error } = await sb.auth.getUser();
+  if (!client || !client.auth) {
+    console.error("Client Supabase introuvable ou non initialisé.");
+    window.location.replace("login.html");
+    return false;
+  }
+
+  const { data, error } = await client.auth.getUser();
 
   if (error || !data.user) {
     console.error("Erreur session Supabase :", error);
-
     window.location.replace("login.html");
     return false;
   }
