@@ -17,16 +17,10 @@
     }
   );
 
-  // 🔑 Indispensable : rendre le client accessible globalement pour le reste de ton code
+  // 🔑 On rend le client unique accessible globalement
   window.supabaseClient = supabase;
 
-  // 🔒 Vérification immédiate au chargement (Sécurité anti-contournement)
-  const { data: { session: initialSession } } = await supabase.auth.getSession();
-  if (!initialSession) {
-    window.location.replace("login.html");
-  }
-
-  // 🔒 Auth guard pour les changements d'état (déconnexion, expiration)
+  // 🔒 Surveillance des changements d'état (déconnexion en direct)
   supabase.auth.onAuthStateChange((event, session) => {
     if (!session || event === "SIGNED_OUT") {
       window.location.replace("login.html");
@@ -35,29 +29,25 @@
 
   document.addEventListener("DOMContentLoaded", () => {
     const btnLogout = document.getElementById("btnLogout");
-
     if (btnLogout){
       btnLogout.onclick = async () => {
         await supabase.auth.signOut();
       };
     }
   });
-    
+
   /* =========================
      TIMEOUT D'INACTIVITÉ PRO
   ========================= */
-
   let inactivityTimer;
   let countdownInterval;
   let remainingTime;
 
   const INACTIVITY_LIMIT = 15 * 60 * 1000; // 15 minutes
-  const WARNING_TIME = 60 * 1000;          // 1 minute avant logout
+  const WARNING_TIME = 60 * 1000;          // 1 minute
 
-  // 🔔 Message visuel
   function showWarningBanner() {
     if (document.getElementById("sessionWarning")) return;
-
     const banner = document.createElement("div");
     banner.id = "sessionWarning";
     banner.style.position = "fixed";
@@ -71,10 +61,7 @@
     banner.style.color = "#fff";
     banner.style.fontSize = "13px";
     banner.style.zIndex = "9999";
-    banner.innerHTML = `
-      ⚠️ Session expire dans <b><span id="sessionCountdown">60</span></b> secondes
-    `;
-
+    banner.innerHTML = `⚠️ Session expire dans <b><span id="sessionCountdown">60</span></b> secondes`;
     document.body.appendChild(banner);
   }
 
@@ -83,12 +70,10 @@
     if (banner) banner.remove();
   }
 
-  // 🔁 Reset timer
   function resetInactivityTimer() {
     clearTimeout(inactivityTimer);
     clearInterval(countdownInterval);
     removeWarningBanner();
-
     remainingTime = INACTIVITY_LIMIT;
 
     inactivityTimer = setTimeout(async () => {
@@ -96,32 +81,18 @@
       window.location.replace("login.html");
     }, INACTIVITY_LIMIT);
 
-    // ⏳ Console countdown
     countdownInterval = setInterval(() => {
       remainingTime -= 1000;
-
       const secondsLeft = Math.floor(remainingTime / 1000);
-
-      // 🔔 Afficher warning à 60 secondes
-      if (remainingTime === WARNING_TIME) {
-        showWarningBanner();
-      }
-
-      // 🔄 Mettre à jour affichage si visible
+      if (remainingTime === WARNING_TIME) showWarningBanner();
       const countdownEl = document.getElementById("sessionCountdown");
-      if (countdownEl) {
-        countdownEl.innerText = secondsLeft;
-      }
-
+      if (countdownEl) countdownEl.innerText = secondsLeft;
     }, 1000);
   }
 
-  // Activité utilisateur
   ["click","mousemove","keydown","scroll","touchstart"].forEach(event => {
     document.addEventListener(event, resetInactivityTimer);
   });
-
-  // Démarrer au chargement
   resetInactivityTimer();
 </script>
 
