@@ -10,10 +10,15 @@
     "sb_publishable_5yrGKFGrKF-uSgmnzs7egA_Ix4BkXC4",
     {
       auth: {
-        persistSession: true
+        persistSession: true,
+        autoRefreshToken: true,
+        detectSessionInUrl: true
       }
     }
   );
+
+  // 🔑 Indispensable : rendre le client accessible globalement pour le reste de ton code
+  window.supabaseClient = supabase;
 
   // 🔒 Vérification immédiate au chargement (Sécurité anti-contournement)
   const { data: { session: initialSession } } = await supabase.auth.getSession();
