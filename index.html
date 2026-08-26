@@ -2544,13 +2544,18 @@ async function initSupabaseUser(){
 
   const { data, error } = await client.auth.getUser();
 
-  if (error || !data.user) {
-    console.warn("⚠️ Pas de session valide détectée, redirection vers login.");
-    // Nettoyage de secours pour éviter la persistance d'un mauvais token
-    await client.auth.signOut().catch(() => {});
-    window.location.replace("login.html");
-    return false;
-  }
+console.log("========== AUTH DEBUG ==========");
+console.log("USER :", data?.user);
+console.log("ERROR :", error);
+console.log("PATH :", window.location.href);
+console.log("================================");
+
+if (error || !data.user) {
+  console.warn("⚠️ Pas de session valide détectée, redirection vers login.");
+  await client.auth.signOut().catch(() => {});
+  window.location.replace("login.html");
+  return false;
+}
 
   SUPABASE_USER = data.user;
   console.log("✅ Session Supabase active :", SUPABASE_USER.email);
