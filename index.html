@@ -2645,7 +2645,8 @@ async function createInitialCloudData(){
     settings: JSON.parse(localStorage.getItem(STORAGE.settings) || "{}")
   };
 
-  const { error } = await sb.from("garage_data").insert({
+  // REMPLACER .insert() PAR .upsert() ICI :
+  const { error } = await sb.from("garage_data").upsert({
     user_id: SUPABASE_USER.id,
     data: payload
   });
