@@ -2539,21 +2539,21 @@ async function initSupabaseUser(){
     return false;
   }
 
+  // 🛡️ Anti-boucle : si on boucle déjà vers login, on arrête
+  if (window.location.pathname.includes("login.html")) return false;
+
   const { data, error } = await client.auth.getUser();
 
   if (error || !data.user) {
-    console.error("Erreur session Supabase :", error);
+    console.warn("⚠️ Pas de session valide détectée, redirection vers login.");
+    // Nettoyage de secours pour éviter la persistance d'un mauvais token
+    await client.auth.signOut().catch(() => {});
     window.location.replace("login.html");
     return false;
   }
 
   SUPABASE_USER = data.user;
-
-  console.log(
-    "✅ Session Supabase active :",
-    SUPABASE_USER.email
-  );
-
+  console.log("✅ Session Supabase active :", SUPABASE_USER.email);
   return true;
 }
 
