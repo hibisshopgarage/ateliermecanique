@@ -22,10 +22,10 @@
 
   // 🔒 Surveillance des changements d'état (déconnexion en direct)
   supabase.auth.onAuthStateChange((event, session) => {
-    if (!session || event === "SIGNED_OUT") {
-      window.location.replace("login.html");
-    }
-  });
+  if (event === "SIGNED_OUT") {
+    window.location.replace("login.html");
+  }
+});
 
   document.addEventListener("DOMContentLoaded", () => {
     const btnLogout = document.getElementById("btnLogout");
