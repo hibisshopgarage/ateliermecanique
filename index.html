@@ -8,133 +8,116 @@
   const supabase = createClient(
     "https://bdrtlveohbjwxcobeysb.supabase.co",
     "sb_publishable_5yrGKFGrKF-uSgmnzs7egA_Ix4BkXC4",
-{
-    auth: {
-  persistSession: true
-}
-  }
-);
+    {
+      auth: {
+        persistSession: true
+      }
+    }
+  );
 
-    // 🔒 Auth guard
-supabase.auth.onAuthStateChange((event, session) => {
-
-  if (!session){
+  // 🔒 Vérification immédiate au chargement (Sécurité anti-contournement)
+  const { data: { session: initialSession } } = await supabase.auth.getSession();
+  if (!initialSession) {
     window.location.replace("login.html");
   }
 
-});
-
+  // 🔒 Auth guard pour les changements d'état (déconnexion, expiration)
   supabase.auth.onAuthStateChange((event, session) => {
+    if (!session || event === "SIGNED_OUT") {
+      window.location.replace("login.html");
+    }
+  });
 
-  if (event === "SIGNED_OUT"){
-    window.location.href = "login.html";
-  }
+  document.addEventListener("DOMContentLoaded", () => {
+    const btnLogout = document.getElementById("btnLogout");
 
-});
-
-    document.addEventListener("DOMContentLoaded", ()=>{
-
-  const btnLogout = document.getElementById("btnLogout");
-
-  if (btnLogout){
-    btnLogout.onclick = async () => {
-  await supabase.auth.signOut();
-};
-  }
-
-});
-
-  // Pas connecté -> dehors
-  if (!session){
-    window.location.replace("login.html");
-  }
-
+    if (btnLogout){
+      btnLogout.onclick = async () => {
+        await supabase.auth.signOut();
+      };
+    }
+  });
     
-/* =========================
-   TIMEOUT D'INACTIVITÉ PRO
-========================= */
+  /* =========================
+     TIMEOUT D'INACTIVITÉ PRO
+  ========================= */
 
-let inactivityTimer;
-let countdownInterval;
-let remainingTime;
+  let inactivityTimer;
+  let countdownInterval;
+  let remainingTime;
 
-const INACTIVITY_LIMIT = 15 * 60 * 1000; // 15 minutes
-const WARNING_TIME = 60 * 1000;         // 1 minute avant logout
+  const INACTIVITY_LIMIT = 15 * 60 * 1000; // 15 minutes
+  const WARNING_TIME = 60 * 1000;          // 1 minute avant logout
 
-// 🔔 Message visuel
-function showWarningBanner() {
+  // 🔔 Message visuel
+  function showWarningBanner() {
+    if (document.getElementById("sessionWarning")) return;
 
-  if (document.getElementById("sessionWarning")) return;
+    const banner = document.createElement("div");
+    banner.id = "sessionWarning";
+    banner.style.position = "fixed";
+    banner.style.bottom = "20px";
+    banner.style.right = "20px";
+    banner.style.background = "#1a1a1a";
+    banner.style.border = "1px solid #333";
+    banner.style.padding = "12px 16px";
+    banner.style.borderRadius = "10px";
+    banner.style.boxShadow = "0 8px 24px rgba(0,0,0,0.6)";
+    banner.style.color = "#fff";
+    banner.style.fontSize = "13px";
+    banner.style.zIndex = "9999";
+    banner.innerHTML = `
+      ⚠️ Session expire dans <b><span id="sessionCountdown">60</span></b> secondes
+    `;
 
-  const banner = document.createElement("div");
-  banner.id = "sessionWarning";
-  banner.style.position = "fixed";
-  banner.style.bottom = "20px";
-  banner.style.right = "20px";
-  banner.style.background = "#1a1a1a";
-  banner.style.border = "1px solid #333";
-  banner.style.padding = "12px 16px";
-  banner.style.borderRadius = "10px";
-  banner.style.boxShadow = "0 8px 24px rgba(0,0,0,0.6)";
-  banner.style.color = "#fff";
-  banner.style.fontSize = "13px";
-  banner.style.zIndex = "9999";
-  banner.innerHTML = `
-    ⚠️ Session expire dans <b><span id="sessionCountdown">60</span></b> secondes
-  `;
+    document.body.appendChild(banner);
+  }
 
-  document.body.appendChild(banner);
-}
+  function removeWarningBanner() {
+    const banner = document.getElementById("sessionWarning");
+    if (banner) banner.remove();
+  }
 
-function removeWarningBanner() {
-  const banner = document.getElementById("sessionWarning");
-  if (banner) banner.remove();
-}
+  // 🔁 Reset timer
+  function resetInactivityTimer() {
+    clearTimeout(inactivityTimer);
+    clearInterval(countdownInterval);
+    removeWarningBanner();
 
-// 🔁 Reset timer
-function resetInactivityTimer() {
+    remainingTime = INACTIVITY_LIMIT;
 
-  clearTimeout(inactivityTimer);
-  clearInterval(countdownInterval);
-  removeWarningBanner();
+    inactivityTimer = setTimeout(async () => {
+      await supabase.auth.signOut();
+      window.location.replace("login.html");
+    }, INACTIVITY_LIMIT);
 
-  remainingTime = INACTIVITY_LIMIT;
+    // ⏳ Console countdown
+    countdownInterval = setInterval(() => {
+      remainingTime -= 1000;
 
-  inactivityTimer = setTimeout(async () => {
-    await supabase.auth.signOut();
-    window.location.replace("login.html");
-  }, INACTIVITY_LIMIT);
+      const secondsLeft = Math.floor(remainingTime / 1000);
 
-  // ⏳ Console countdown
-  countdownInterval = setInterval(() => {
-    remainingTime -= 1000;
+      // 🔔 Afficher warning à 60 secondes
+      if (remainingTime === WARNING_TIME) {
+        showWarningBanner();
+      }
 
-    const secondsLeft = Math.floor(remainingTime / 1000);
+      // 🔄 Mettre à jour affichage si visible
+      const countdownEl = document.getElementById("sessionCountdown");
+      if (countdownEl) {
+        countdownEl.innerText = secondsLeft;
+      }
 
-    console.log("⏳ Session expire dans:", secondsLeft, "secondes");
+    }, 1000);
+  }
 
-    // 🔔 Afficher warning à 60 secondes
-    if (remainingTime === WARNING_TIME) {
-      showWarningBanner();
-    }
+  // Activité utilisateur
+  ["click","mousemove","keydown","scroll","touchstart"].forEach(event => {
+    document.addEventListener(event, resetInactivityTimer);
+  });
 
-    // 🔄 Mettre à jour affichage si visible
-    const countdownEl = document.getElementById("sessionCountdown");
-    if (countdownEl) {
-      countdownEl.innerText = secondsLeft;
-    }
-
-  }, 1000);
-}
-
-// Activité utilisateur
-["click","mousemove","keydown","scroll","touchstart"].forEach(event => {
-  document.addEventListener(event, resetInactivityTimer);
-});
-
-// Démarrer au chargement
-resetInactivityTimer();
-
+  // Démarrer au chargement
+  resetInactivityTimer();
 </script>
 
   <meta charset="utf-8" />
