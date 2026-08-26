@@ -2560,7 +2560,6 @@ document.querySelectorAll('.navBtn').forEach(btn=>{
 
 /* ===================== AUTH SUPABASE ===================== */
 async function initSupabaseUser(){
-  // Utiliser le client global initialisé au début du fichier
   const client = window.supabaseClient;
 
   if (!client || !client.auth) {
