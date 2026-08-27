@@ -2,10 +2,10 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-  <script type="module">
-  import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
-  const supabase = createClient(
+<script>
+  const supabase = window.supabase.createClient(
     "https://bdrtlveohbjwxcobeysb.supabase.co",
     "sb_publishable_5yrGKFGrKF-uSgmnzs7egA_Ix4BkXC4",
     {
@@ -17,83 +17,13 @@
     }
   );
 
-  // 🔑 On rend le client unique accessible globalement
   window.supabaseClient = supabase;
 
-  // 🔒 Surveillance des changements d'état (déconnexion en direct)
   supabase.auth.onAuthStateChange((event, session) => {
-  if (event === "SIGNED_OUT") {
-    window.location.replace("login.html");
-  }
-});
-
-  document.addEventListener("DOMContentLoaded", () => {
-    const btnLogout = document.getElementById("btnLogout");
-    if (btnLogout){
-      btnLogout.onclick = async () => {
-        await supabase.auth.signOut();
-      };
+    if (event === "SIGNED_OUT") {
+      window.location.replace("login.html");
     }
   });
-
-  /* =========================
-     TIMEOUT D'INACTIVITÉ PRO
-  ========================= */
-  let inactivityTimer;
-  let countdownInterval;
-  let remainingTime;
-
-  const INACTIVITY_LIMIT = 15 * 60 * 1000; // 15 minutes
-  const WARNING_TIME = 60 * 1000;          // 1 minute
-
-  function showWarningBanner() {
-    if (document.getElementById("sessionWarning")) return;
-    const banner = document.createElement("div");
-    banner.id = "sessionWarning";
-    banner.style.position = "fixed";
-    banner.style.bottom = "20px";
-    banner.style.right = "20px";
-    banner.style.background = "#1a1a1a";
-    banner.style.border = "1px solid #333";
-    banner.style.padding = "12px 16px";
-    banner.style.borderRadius = "10px";
-    banner.style.boxShadow = "0 8px 24px rgba(0,0,0,0.6)";
-    banner.style.color = "#fff";
-    banner.style.fontSize = "13px";
-    banner.style.zIndex = "9999";
-    banner.innerHTML = `⚠️ Session expire dans <b><span id="sessionCountdown">60</span></b> secondes`;
-    document.body.appendChild(banner);
-  }
-
-  function removeWarningBanner() {
-    const banner = document.getElementById("sessionWarning");
-    if (banner) banner.remove();
-  }
-
-  function resetInactivityTimer() {
-    clearTimeout(inactivityTimer);
-    clearInterval(countdownInterval);
-    removeWarningBanner();
-    remainingTime = INACTIVITY_LIMIT;
-
-    inactivityTimer = setTimeout(async () => {
-      await supabase.auth.signOut();
-      window.location.replace("login.html");
-    }, INACTIVITY_LIMIT);
-
-    countdownInterval = setInterval(() => {
-      remainingTime -= 1000;
-      const secondsLeft = Math.floor(remainingTime / 1000);
-      if (remainingTime === WARNING_TIME) showWarningBanner();
-      const countdownEl = document.getElementById("sessionCountdown");
-      if (countdownEl) countdownEl.innerText = secondsLeft;
-    }, 1000);
-  }
-
-  ["click","mousemove","keydown","scroll","touchstart"].forEach(event => {
-    document.addEventListener(event, resetInactivityTimer);
-  });
-  resetInactivityTimer();
 </script>
 
   <meta charset="utf-8" />
