@@ -10894,6 +10894,20 @@ function formatVehicleLabel(v){
 
 })();
 
+  document.getElementById('btnLogout')?.addEventListener('click', async () => {
+  // 1. Déconnexion de la session Supabase
+  const client = window.supabaseClient || sb;
+  if (client) {
+    await client.auth.signOut();
+  }
+
+  // 2. Nettoyage du stockage local au cas où
+  localStorage.clear();
+  sessionStorage.clear();
+
+  // 3. Redirection forcée vers la page de connexion
+  window.location.replace('login.html');
+});
   
 </script>
 
