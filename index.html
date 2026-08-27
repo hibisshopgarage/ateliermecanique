@@ -5,25 +5,27 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <script>
-  const supabase = window.supabase.createClient(
-    "https://bdrtlveohbjwxcobeysb.supabase.co",
-    "sb_publishable_5yrGKFGrKF-uSgmnzs7egA_Ix4BkXC4",
-    {
-      auth: {
-        persistSession: true,
-        autoRefreshToken: true,
-        detectSessionInUrl: true
+  if (typeof window.supabaseClient === 'undefined') {
+    const supabaseApp = window.supabase.createClient(
+      "https://bdrtlveohbjwxcobeysb.supabase.co",
+      "sb_publishable_5yrGKFGrKF-uSgmnzs7egA_Ix4BkXC4",
+      {
+        auth: {
+          persistSession: true,
+          autoRefreshToken: true,
+          detectSessionInUrl: true
+        }
       }
-    }
-  );
+    );
 
-  window.supabaseClient = supabase;
+    window.supabaseClient = supabaseApp;
 
-  supabase.auth.onAuthStateChange((event, session) => {
-    if (event === "SIGNED_OUT") {
-      window.location.replace("login.html");
-    }
-  });
+    supabaseApp.auth.onAuthStateChange((event, session) => {
+      if (event === "SIGNED_OUT" && !window.location.pathname.includes("login.html")) {
+        window.location.replace("login.html");
+      }
+    });
+  }
 </script>
 
   <meta charset="utf-8" />
@@ -1983,7 +1985,7 @@ function updateInvoiceTotalsLive(inv){
 
 
   /* ===================== SUPABASE ===================== */
-const sb = window.supabaseClient;
+var sb = window.supabaseClient || (window.supabaseApp ? window.supabaseApp : null);
 
 let SUPABASE_USER = null;
 
